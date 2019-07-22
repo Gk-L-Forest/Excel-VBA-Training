@@ -2,6 +2,11 @@ Attribute VB_Name = "GeneralRoutine"
 Option Explicit
 
 '------------------------------------------------------------------------------
+' ## 列要素の付加数
+'------------------------------------------------------------------------------
+Public Const ADDITION_COLUMN As Long = 2
+
+'------------------------------------------------------------------------------
 ' ## 画面更新/イベント検知/自動計算の制御
 '------------------------------------------------------------------------------
 Public Property Let AccelerationMode(ByVal flg As Boolean)
@@ -13,7 +18,7 @@ Public Property Let AccelerationMode(ByVal flg As Boolean)
 End Property
 
 '------------------------------------------------------------------------------
-' ## 既存のExcelファイルを開く(汎用)
+' ## 既存のExcelファイルを読み取り専用で開く(汎用)
 '------------------------------------------------------------------------------
 Public Sub OpenExcelFile(ByRef open_file As Workbook)
     
@@ -24,51 +29,35 @@ Public Sub OpenExcelFile(ByRef open_file As Workbook)
         MsgBox "ファイル選択がキャンセルされました。"
         Exit Sub
     Else
-        
+        ' 同名ブックが開いているかの確認
         Dim openFileName As String
         openFileName = Dir(openFilePath)
-        
-        Dim openingFile As Workbook
-        For Each openingFile In Workbooks
-            
-            If openingFile.Name = openFileName Then
-                MsgBox "同名ブックが既に開いています。"
-                Exit Sub
-            End If
-            
-        Next openingFile
-        
+        If ConfirmDuplicateFile(openFileName) Then Exit Sub
     End If
     
     GeneralRoutine.AccelerationMode = True
-    Workbooks.Open FileName:=openFileName, ReadOnly:=True
+    Workbooks.Open FileName:=openFilePath, ReadOnly:=True
     Set open_file = Workbooks(openFileName)
     GeneralRoutine.AccelerationMode = False
     
 End Sub
 
 '------------------------------------------------------------------------------
-' ## "元ファイル名_編集用"の出力ファイルを作成する
+' ## 同名ブックが開いているかの確認(汎用)
 '------------------------------------------------------------------------------
-Public Sub CreateNewFile(ByRef origin_file As Workbook, ByRef new_file As Workbook)
+Public Function ConfirmDuplicateFile(ByVal open_filename As String) As Boolean
     
-    Dim extensionPoint As Long
-    Dim newFileName As String
-    extensionPoint = InStrRev(origin_file.Name, ".")
-    newFileName = Left(origin_file.Name, extensionPoint - 1) & "_編集用.xlsx"
+    ConfirmDuplicateFile = False
     
-    Dim newFilePath As String
-    newFilePath = origin_file.Path & "\" & newFileName
+    Dim openingFile As Workbook
+    For Each openingFile In Workbooks
+        
+        If openingFile.Name = open_filename Then
+            ConfirmDuplicateFile = True
+            MsgBox "同名ブックが開かれているため処理を中断しました。"
+            Exit Function
+        End If
+        
+    Next openingFile
     
-    If Dir(newFilePath) <> "" Then
-        MsgBox "同名ファイルが存在するため処理を中断しました。"
-        origin_file.Close SaveChanges:=False
-        Exit Sub
-    Else
-        GeneralRoutine.AccelerationMode = True
-        Set new_file = Workbooks.Add
-        new_file.SaveAs FileName:=newFilePath
-        GeneralRoutine.AccelerationMode = False
-    End If
-    
-End Sub
+End Function

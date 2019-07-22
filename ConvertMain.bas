@@ -8,32 +8,30 @@ Attribute VB_Name = "ConvertMain"
 '------------------------------------------------------------------------------
 Option Explicit
 
-Public Const ADDITION_COLUMN As Long = 2
-
 '------------------------------------------------------------------------------
-' ## シートごとに書かれた帳票のデータベース形式への変換メインプログラム
+' ## シートごとに書かれた帳票のデータベース形式への変換プログラム
 '
 ' 任意の形式で書かれたExcelファイルをシート名と行番号を保持しつつ
 ' すべてのシートをマージしデータベース形式の表へ変換する
 '------------------------------------------------------------------------------
-Private Sub ConvertDatabase()
+Public Sub ConvertDatabase()
     
     ' 元ファイルを開く
-    Dim originFile As Workbook
-    Call GeneralRoutine.OpenExcelFile(originFile)
-    If originFile Is Nothing Then Exit Sub
+    Dim sourceFile As Workbook
+    Call GeneralRoutine.OpenExcelFile(sourceFile)
+    If sourceFile Is Nothing Then Exit Sub
     
     ' 出力ファイルを作成
-    Dim databaseFile As Workbook
-    Call CreateNewFile(originFile, databaseFile)
-    If databaseFile Is Nothing Then Exit Sub
+    Dim dataFile As Workbook
+    Call createNewFile(sourceFile, dataFile)
+    If dataFile Is Nothing Then Exit Sub
     
     GeneralRoutine.AccelerationMode = True
     
     ' 最大列確認および総行数記憶
     Dim rowSize As Long: rowSize = 0
     Dim columnSize As Long: columnSize = 0
-    Call LoadData.FetchMatrixSize(originFile, rowSize, columnSize)
+    Call fetchMatrixSize(sourceFile, rowSize, columnSize)
     
     ' シート名および行番号の要素を確保
     columnSize = columnSize + ADDITION_COLUMN
@@ -41,18 +39,18 @@ Private Sub ConvertDatabase()
     ' シート名/行番号と共にすべてのデータを配列へ格納
     Dim dataArray() As Variant
     ReDim dataArray(1 To rowSize, 1 To columnSize)
-    Call LoadData.StoreToArray(originFile, dataArray)
-    originFile.Close SaveChanges:=False
+    Call storeToArray(sourceFile, dataArray)
+    sourceFile.Close SaveChanges:=False
     
     ' ヘッダの生成
     Dim columnName() As String
     ReDim columnName(1 To 1, 1 To columnSize)
     columnName(1, 1) = "シート名"
     columnName(1, 2) = "行番号"
-    Call LoadData.CreateHeader(columnName)
+    Call createHeader(columnName)
     
     ' ファイルへ出力
-    With databaseFile.Sheets(1)
+    With dataFile.Sheets(1)
         .Cells(1, 1).Resize(1, columnSize).NumberFormatLocal = "@"
         .Cells(1, 1).Resize(1, columnSize) = columnName
         .Cells(2, 1).Resize(rowSize, columnSize).NumberFormatLocal = "@"
@@ -60,8 +58,126 @@ Private Sub ConvertDatabase()
     End With
     
     GeneralRoutine.AccelerationMode = False
-    databaseFile.Save
+    dataFile.Save
     
-    MsgBox "シートのマージが完了しました"
+    MsgBox "データベース形式への変換が完了しました。"
+    
+End Sub
+
+'------------------------------------------------------------------------------
+' ## "元ファイル名_編集用"の出力ファイルを作成する
+'------------------------------------------------------------------------------
+Private Sub createNewFile(ByRef source_file As Workbook, _
+                          ByRef new_file As Workbook)
+    
+    Dim extensionPoint As Long
+    Dim newFileName As String
+    extensionPoint = InStrRev(source_file.Name, ".")
+    newFileName = Left(source_file.Name, extensionPoint - 1) & "_編集用.xlsx"
+    
+    Dim newFilePath As String
+    newFilePath = source_file.Path & "\" & newFileName
+    
+    ' エラーになりうる場合は元ファイルを閉じて終了
+    If Dir(newFilePath) <> "" Then
+        MsgBox "同名ファイルが存在するため処理を中断しました。"
+        source_file.Close SaveChanges:=False
+        Exit Sub
+    ElseIf ConfirmDuplicateFile(newFileName) Then
+        source_file.Close SaveChanges:=False
+        Exit Sub
+    End If
+    
+    GeneralRoutine.AccelerationMode = True
+    Set new_file = Workbooks.Add
+    new_file.SaveAs FileName:=newFilePath
+    GeneralRoutine.AccelerationMode = False
+    
+End Sub
+
+'------------------------------------------------------------------------------
+' ## 最大列確認および総行数記憶
+'------------------------------------------------------------------------------
+Public Sub fetchMatrixSize(ByRef source_file As Workbook, _
+                           ByRef row_size As Long, ByRef column_size As Long)
+    
+    Dim currentSheet As Worksheet
+    Dim currentData As Variant
+    Dim bufferSize As Long
+    
+    For Each currentSheet In source_file.Worksheets
+        
+        currentData = currentSheet.UsedRange
+        
+        If Not IsEmpty(currentData) Then
+            
+            row_size = row_size + UBound(currentData, 1)
+            
+            bufferSize = UBound(currentData, 2)
+            If bufferSize > column_size Then column_size = bufferSize
+            
+            Erase currentData
+            
+        End If
+        
+    Next currentSheet
+    
+End Sub
+
+'------------------------------------------------------------------------------
+' ## シート名/行番号を付加し配列へ格納
+'------------------------------------------------------------------------------
+Public Sub storeToArray(ByRef source_file As Workbook, _
+                        ByRef data_array() As Variant)
+    
+    Dim currentSheet As Worksheet
+    Dim currentData As Variant
+    Dim i_row As Long, j_col As Long
+    Dim db_row As Long, db_col As Long
+    
+    db_row = 0
+    For Each currentSheet In source_file.Worksheets
+        
+        currentData = currentSheet.UsedRange
+        
+        If Not IsEmpty(currentData) Then
+            
+            For i_row = 1 To UBound(currentData, 1)
+                
+                db_row = db_row + 1
+                
+                data_array(db_row, 1) = currentSheet.Name
+                data_array(db_row, 2) = i_row
+                
+                For j_col = 1 To UBound(currentData, 2)
+                    
+                    db_col = ADDITION_COLUMN + j_col
+                    data_array(db_row, db_col) = currentData(i_row, j_col)
+                    
+                Next j_col
+                
+            Next i_row
+            
+            Erase currentData
+            
+        End If
+        
+    Next currentSheet
+    
+End Sub
+
+'------------------------------------------------------------------------------
+' ## ヘッダの生成
+'
+' 暫定的に"列**"としているがフォーム入力等で識別子を与えるべき
+'------------------------------------------------------------------------------
+Public Sub createHeader(ByRef column_name() As String)
+    
+    Dim i As Long, n_col As Long
+    
+    For i = 1 + ADDITION_COLUMN To UBound(column_name, 2)
+        n_col = i - ADDITION_COLUMN
+        column_name(1, i) = "列" & n_col
+    Next
     
 End Sub
