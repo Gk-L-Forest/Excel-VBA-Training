@@ -9,16 +9,22 @@ Attribute VB_Name = "ConvertMain"
 Option Explicit
 
 '------------------------------------------------------------------------------
+' ## 列要素の付加数
+'------------------------------------------------------------------------------
+Private Const ADDITION_COLUMN As Long = 2
+
+'------------------------------------------------------------------------------
 ' ## シートごとに書かれた帳票のデータベース形式への変換プログラム
 '
 ' 任意の形式で書かれたExcelファイルをシート名と行番号を保持しつつ
 ' すべてのシートをマージしデータベース形式の表へ変換する
 '------------------------------------------------------------------------------
-Public Sub ConvertDatabase()
+Public Sub ConvertDatabase(ByVal source_filepath As String)
     
+    ' TODO: Excelファイルかどうかを判定し選別する
     ' 元ファイルを開く
     Dim sourceFile As Workbook
-    Call GeneralRoutine.OpenExcelFile(sourceFile)
+    Call CommonSub.OpenExcelFile(source_filepath, sourceFile)
     If sourceFile Is Nothing Then Exit Sub
     
     ' 出力ファイルを作成
@@ -26,7 +32,7 @@ Public Sub ConvertDatabase()
     Call createNewFile(sourceFile, dataFile)
     If dataFile Is Nothing Then Exit Sub
     
-    GeneralRoutine.AccelerationMode = True
+    CommonProperty.AccelerationMode = True
     
     ' 最大列確認および総行数記憶
     Dim rowSize As Long: rowSize = 0
@@ -57,7 +63,7 @@ Public Sub ConvertDatabase()
         .Cells(2, 1).Resize(rowSize, columnSize) = dataArray
     End With
     
-    GeneralRoutine.AccelerationMode = False
+    CommonProperty.AccelerationMode = False
     dataFile.Save
     
     MsgBox "データベース形式への変換が完了しました。"
@@ -88,10 +94,10 @@ Private Sub createNewFile(ByRef source_file As Workbook, _
         Exit Sub
     End If
     
-    GeneralRoutine.AccelerationMode = True
+    CommonProperty.AccelerationMode = True
     Set new_file = Workbooks.Add
     new_file.SaveAs FileName:=newFilePath
-    GeneralRoutine.AccelerationMode = False
+    CommonProperty.AccelerationMode = False
     
 End Sub
 
