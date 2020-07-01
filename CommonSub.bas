@@ -1,4 +1,11 @@
 Attribute VB_Name = "CommonSub"
+'------------------------------------------------------------------------------
+' ## コーディングガイドライン
+'
+' [You.Activate|VBAコーディングガイドライン]に準拠する
+' (http://www.thom.jp/vbainfo/codingguideline.html)
+'
+'------------------------------------------------------------------------------
 Option Explicit
 
 '------------------------------------------------------------------------------
@@ -7,23 +14,13 @@ Option Explicit
 Public Sub OpenExcelFile(ByVal open_filepath As String, _
                          ByRef open_file As Workbook)
     
-    'Dim openFilePath As String
-    'openFilePath = _
-    '    Application.GetOpenFilename("Microsoft Excelブック, *.xls?")
+    ' 同名ブックの起動有無確認
+    Dim openFileName As String
+    openFileName = Dir(open_filepath)
+    If Not CommonFunction.ConfirmDuplicateBook(openFileName) Then Exit Sub
     
-    If open_filepath = "False" Then
-        MsgBox "ファイルが選択されていません。"
-        Exit Sub
-    Else
-        ' 同名ブックが開いているかの確認
-        Dim openFileName As String
-        openFileName = Dir(open_filepath)
-        If CommonFunction.ConfirmDuplicateFile(openFileName) Then Exit Sub
-    End If
-    
-    CommonProperty.AccelerationMode = True
+    ' HACK: アドインではエラーになるためAccelerationModeを使用していない
     Workbooks.Open FileName:=open_filepath, ReadOnly:=True
     Set open_file = Workbooks(openFileName)
-    CommonProperty.AccelerationMode = False
     
 End Sub
