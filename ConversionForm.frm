@@ -23,20 +23,47 @@ Attribute VB_Exposed = False
 Option Explicit
 
 '------------------------------------------------------------------------------
+' ## 設定ファイルのファイル名
+'------------------------------------------------------------------------------
+Private Const SHEET_CONFIG = "ExclusionarySheet.config"
+Private Const ROW_CONFIG = "ExclusionaryRow.config"
+
+'------------------------------------------------------------------------------
 ' ## 変換ボタン
 '------------------------------------------------------------------------------
 Private Sub ConversionButton_Click()
     
+    ' 設定値読み込み
+    Dim exclusionarySheet() As String
+    Dim exclusionaryRow() As String
+    
+    If ExclusionarySheetBox.Value <> "" Then
+        Call LoadConfig.LoadExclusionarySheet _
+            (ExclusionarySheetBox.Value, exclusionarySheet)
+    End If
+    
+    If ExclusionaryRowBox.Value <> "" Then
+        Call LoadConfig.LoadExclusionaryRow _
+            (ExclusionaryRowBox.Value, exclusionaryRow)
+        If IsEmpty(exclusionaryRow) Then Exit Sub
+    End If
+    
+    ' 変換実行
     With ConversionForm.FileDorpView.ListItems
         If .Count = 1 Then
             Dim sourceFilePath As String
             sourceFilePath = .Item(1).SubItems(1)
             
-            Call ConvertDatabase.ConvertDatabase(sourceFilePath)
+            Call ConvertDatabase.ConvertDatabase _
+                (sourceFilePath, exclusionarySheet, exclusionaryRow)
         Else
-            MsgBox "ファイルが指定されていません。"
+            MsgBox "ファイルが指定されていません。", vbExclamation
         End If
     End With
+    
+    ' 設定値保存
+    Call SaveConfig.SaveConfig(SHEET_CONFIG, ExclusionarySheetBox.Value)
+    Call SaveConfig.SaveConfig(ROW_CONFIG, ExclusionaryRowBox.Value)
     
 End Sub
 
@@ -48,7 +75,7 @@ Private Sub FileDorpView_OLEDragDrop _
      Shift As Integer, x As Single, y As Single)
     
     If Not Data.Files.Count = 1 Then
-        MsgBox "変換するファイルは1つにして下さい。"
+        MsgBox "変換するファイルは1つにして下さい。", vbExclamation
         Exit Sub
     End If
     
@@ -86,6 +113,16 @@ Private Sub UserForm_Initialize()
     With ExclusionarySheetBox
         .MultiLine = True                   ' 改行の有効化
         .ScrollBars = fmScrollBarsVertical  ' スクロールバー
+        
+        Dim configSheet As String
+        Call LoadConfig.LoadConfig(SHEET_CONFIG, configSheet)
+        .Value = configSheet
+    End With
+    
+    With ExclusionaryRowBox
+        Dim configRow As String
+        Call LoadConfig.LoadConfig(ROW_CONFIG, configRow)
+        .Value = configRow
     End With
     
 End Sub

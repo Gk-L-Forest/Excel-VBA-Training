@@ -20,7 +20,8 @@ Public Function ConfirmDuplicateBook _
     For Each openingFile In Workbooks
         If openingFile.Name = confirm_filename Then
             ConfirmDuplicateBook = False
-            MsgBox "同名ブックが開かれているため処理を中断しました。"
+            MsgBox "同名ブックが開かれているため処理を中断しました。", _
+                vbCritical
             Exit Function
         End If
     Next openingFile
@@ -37,7 +38,7 @@ Public Function ConfirmExistingFile _
     
     If Dir(confirm_filepath) <> "" Then
         ConfirmExistingFile = False
-        MsgBox "同名ファイルが存在するため処理を中断しました。"
+        MsgBox "同名ファイルが存在するため処理を中断しました。", vbCritical
         Exit Function
     End If
     
