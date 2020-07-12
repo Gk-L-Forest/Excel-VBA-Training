@@ -29,41 +29,42 @@ Private Const SHEET_CONFIG = "ExclusionarySheet.config"
 Private Const ROW_CONFIG = "ExclusionaryRow.config"
 
 '------------------------------------------------------------------------------
-' ## 変換ボタン
+' ## フォーム初期化
+'
+' ここで指定しているプロパティは以下の通り
+' ・サイズ関係を除く動作上必須のもの
+' ・コードでしか指定できないもの
 '------------------------------------------------------------------------------
-Private Sub ConversionButton_Click()
+Private Sub UserForm_Initialize()
     
-    ' 設定値読み込み
-    Dim exclusionarySheet() As String
-    Dim exclusionaryRow() As String
-    
-    If ExclusionarySheetBox.Value <> "" Then
-        Call LoadConfig.LoadExclusionarySheet _
-            (ExclusionarySheetBox.Value, exclusionarySheet)
-    End If
-    
-    If ExclusionaryRowBox.Value <> "" Then
-        Call LoadConfig.LoadExclusionaryRow _
-            (ExclusionaryRowBox.Value, exclusionaryRow)
-        If IsEmpty(exclusionaryRow) Then Exit Sub
-    End If
-    
-    ' 変換実行
-    With ConversionForm.FileDorpView.ListItems
-        If .Count = 1 Then
-            Dim sourceFilePath As String
-            sourceFilePath = .Item(1).SubItems(1)
-            
-            Call ConvertDatabase.ConvertDatabase _
-                (sourceFilePath, exclusionarySheet, exclusionaryRow)
-        Else
-            MsgBox "ファイルが指定されていません。", vbExclamation
-        End If
+    With FileDorpView
+        .OLEDropMode = ccOLEDropManual  ' D&Dの有効化
+        .View = lvwReport               ' 表示形式
+        .LabelEdit = lvwManual          ' 内容の編集
+        .AllowColumnReorder = True      ' 列幅の変更
+        .FullRowSelect = True           ' 行全体の選択
+        .Gridlines = True               ' グリッド線表示
+        
+        .ColumnHeaders.Add Text:="ファイル名", Width:=100
+        .ColumnHeaders.Add Text:="ファイルパス", Width:=400
     End With
     
-    ' 設定値保存
-    Call SaveConfig.SaveConfig(SHEET_CONFIG, ExclusionarySheetBox.Value)
-    Call SaveConfig.SaveConfig(ROW_CONFIG, ExclusionaryRowBox.Value)
+    With ExclusionarySheetBox
+        .MultiLine = True                   ' 改行の有効化
+        .ScrollBars = fmScrollBarsVertical  ' スクロールバー
+        
+        ' 設定ファイルの読み込み
+        Dim configSheet As String
+        Call LoadConfig.LoadConfig(SHEET_CONFIG, configSheet)
+        .Value = configSheet
+    End With
+    
+    With ExclusionaryRowBox
+        ' 設定ファイルの読み込み
+        Dim configRow As String
+        Call LoadConfig.LoadConfig(ROW_CONFIG, configRow)
+        .Value = configRow
+    End With
     
 End Sub
 
@@ -90,39 +91,36 @@ Private Sub FileDorpView_OLEDragDrop _
 End Sub
 
 '------------------------------------------------------------------------------
-' ## フォーム初期化
-'
-' ここで指定しているプロパティは以下の通り
-' ・サイズ関係を除く動作上必須のもの
-' ・コードでしか指定できないもの
+' ## 変換ボタン
 '------------------------------------------------------------------------------
-Private Sub UserForm_Initialize()
+Private Sub ConversionButton_Click()
     
-    With FileDorpView
-        .OLEDropMode = ccOLEDropManual  ' D&Dの有効化
-        .View = lvwReport               ' 表示形式
-        .LabelEdit = lvwManual          ' 内容の編集
-        .AllowColumnReorder = True      ' 列幅の変更
-        .FullRowSelect = True           ' 行全体の選択
-        .Gridlines = True               ' グリッド線表示
-        
-        .ColumnHeaders.Add Text:="ファイル名", Width:=100
-        .ColumnHeaders.Add Text:="ファイルパス", Width:=400
-    End With
-    
-    With ExclusionarySheetBox
-        .MultiLine = True                   ' 改行の有効化
-        .ScrollBars = fmScrollBarsVertical  ' スクロールバー
-        
-        Dim configSheet As String
-        Call LoadConfig.LoadConfig(SHEET_CONFIG, configSheet)
-        .Value = configSheet
-    End With
-    
-    With ExclusionaryRowBox
-        Dim configRow As String
-        Call LoadConfig.LoadConfig(ROW_CONFIG, configRow)
-        .Value = configRow
+    With ConversionForm.FileDorpView.ListItems
+        If .Count = 1 Then
+            Dim sourceFilePath As String
+            Dim exclusionarySheet() As String
+            Dim exclusionaryRow() As String
+            
+            sourceFilePath = .Item(1).SubItems(1)
+            
+            ' 設定値読み込み
+            Call LoadConfig.LoadExclusionarySheet _
+                (ExclusionarySheetBox.Value, exclusionarySheet)
+            Call LoadConfig.LoadExclusionaryRow _
+                (ExclusionaryRowBox.Value, exclusionaryRow)
+            
+            ' 変換実行
+            Call ConvertDatabase.ConvertDatabase _
+                (sourceFilePath, exclusionarySheet, exclusionaryRow)
+            
+            ' 設定値保存
+            Call SaveConfig.SaveConfig _
+                (SHEET_CONFIG, ExclusionarySheetBox.Value)
+            Call SaveConfig.SaveConfig _
+                (ROW_CONFIG, ExclusionaryRowBox.Value)
+        Else
+            MsgBox "ファイルが指定されていません。", vbExclamation
+        End If
     End With
     
 End Sub

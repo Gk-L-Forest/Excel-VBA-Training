@@ -34,12 +34,11 @@ End Sub
 Public Sub LoadExclusionarySheet(ByVal config_sheetname As String, _
                                  ByRef exclusionary_sheet() As String)
     
-    Dim i As Long
-    
     Dim bufferSheetName() As String
     bufferSheetName = Split(config_sheetname, vbCrLf)
     
     ' 半角/全角スペースのみを除いて除外シート名を記憶
+    Dim i As Long
     Dim blankChecker As String
     Dim n_sheet As Long: n_sheet = 0
     For i = 0 To UBound(bufferSheetName)
@@ -59,6 +58,9 @@ End Sub
 Public Sub LoadExclusionaryRow(ByVal config_rownumber As String, _
                                ByRef exclusionary_row() As String)
     
+    ' 設定値無しの場合終了
+    'If config_rownumber = "" Then Exit Sub
+    
     ' 設定値が数字,ハイフン,カンマのみか確認
     If Not validateSingleCharacter(config_rownumber) Then Exit Sub
     
@@ -70,6 +72,11 @@ Public Sub LoadExclusionaryRow(ByVal config_rownumber As String, _
     Dim hyphenPosition As Long
     Dim fullRowNumber As String: fullRowNumber = ""
     For i = 0 To UBound(bufferRow)
+        If bufferRow(i) = "" Then
+            MsgBox "カンマ区切りの指定が不正です。", vbCritical
+            Exit Sub
+        End If
+        ' 範囲入力の確認
         hyphenPosition = InStr(bufferRow(i), "-")
         If hyphenPosition > 0 Then
             ' 範囲入力(ハイフン有り)の場合は行番号へ変換

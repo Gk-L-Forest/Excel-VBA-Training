@@ -44,3 +44,22 @@ Public Function ConfirmExistingFile _
     
 End Function
 
+'------------------------------------------------------------------------------
+' ## ”z—ñ”ÅIsEmpty
+'------------------------------------------------------------------------------
+Public Function IsEmptyArray(ByRef confirm_array As Variant)
+    
+    On Error GoTo Error_Handler
+    
+    If UBound(confirm_array) >= 0 Then
+        IsEmptyArray = False
+    Else
+        IsEmptyArray = True
+    End If
+    
+    Exit Function
+    
+Error_Handler:
+    IsEmptyArray = True
+    
+End Function
