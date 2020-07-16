@@ -13,13 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-'------------------------------------------------------------------------------
-' ## コーディングガイドライン
-'
-' [You.Activate|VBAコーディングガイドライン]に準拠する
-' (http://www.thom.jp/vbainfo/codingguideline.html)
-'
-'------------------------------------------------------------------------------
 Option Explicit
 
 '------------------------------------------------------------------------------
@@ -32,8 +25,8 @@ Private Const ROW_CONFIG As String = "\ExclusionaryRow.config"
 ' ## フォーム初期化
 '
 ' ここで指定しているプロパティは以下の通り
-' ・サイズ関係を除く動作上必須のもの
-' ・コードでしか指定できないもの
+' *サイズ関係を除く動作上必須のもの
+' *コードでしか指定できないもの
 '------------------------------------------------------------------------------
 Private Sub UserForm_Initialize()
     
@@ -61,7 +54,7 @@ Private Sub UserForm_Initialize()
 End Sub
 
 '------------------------------------------------------------------------------
-' ## ファイルドロップ時の動作
+' ## ファイルドロップ時の動作(要参照設定)
 '------------------------------------------------------------------------------
 Private Sub FileDorpView_OLEDragDrop _
     (Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, _
@@ -121,11 +114,30 @@ Private Sub ConversionButton_Click()
 End Sub
 
 '------------------------------------------------------------------------------
+' ## 逆変換ボタン
+'------------------------------------------------------------------------------
+Private Sub ReversionButton_Click()
+    
+    With ConversionForm.FileDorpView.ListItems
+        If .Count = 1 Then
+            Dim sourceFilePath As String
+            sourceFilePath = .Item(1).SubItems(1)
+            
+            ' 変換実行
+            Call ConvertReverse.ConvertReverse(sourceFilePath)
+        Else
+            MsgBox "ファイルが指定されていません。", vbExclamation
+        End If
+    End With
+    
+End Sub
+
+'------------------------------------------------------------------------------
 ' ## フォームと同時にブックを閉じる
 '------------------------------------------------------------------------------
 Private Sub UserForm_Terminate()
     
-    ' 編集時はコメントアウトすること
-    ThisWorkbook.Close
+    ' 編集時はコメントアウト
+    'ThisWorkbook.Close
     
 End Sub

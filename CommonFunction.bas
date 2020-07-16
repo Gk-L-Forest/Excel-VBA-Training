@@ -1,27 +1,18 @@
 Attribute VB_Name = "CommonFunction"
-'------------------------------------------------------------------------------
-' ## コーディングガイドライン
-'
-' [You.Activate|VBAコーディングガイドライン]に準拠する
-' (http://www.thom.jp/vbainfo/codingguideline.html)
-'
-'------------------------------------------------------------------------------
 Option Explicit
 
 '------------------------------------------------------------------------------
 ' ## 同名ブックの起動有無確認
 '------------------------------------------------------------------------------
-Public Function ConfirmDuplicateBook _
+Public Function IsDuplicateBook _
     (ByVal confirmation_filename As String) As Boolean
     
-    ConfirmDuplicateBook = True
+    IsDuplicateBook = False
     
     Dim openingFile As Workbook
     For Each openingFile In Workbooks
         If openingFile.Name = confirmation_filename Then
-            ConfirmDuplicateBook = False
-            MsgBox "同名ブックが開かれているため処理を中断しました。", _
-                vbCritical
+            IsDuplicateBook = True
             Exit Function
         End If
     Next openingFile
@@ -29,33 +20,14 @@ Public Function ConfirmDuplicateBook _
 End Function
 
 '------------------------------------------------------------------------------
-' ## 既存ファイルの存在確認
-'------------------------------------------------------------------------------
-Public Function ConfirmExistingFile _
-    (ByVal confirmation_filepath As String) As Boolean
-    
-    ConfirmExistingFile = True
-    
-    If Dir(confirmation_filepath) <> "" Then
-        ConfirmExistingFile = False
-        MsgBox "同名ファイルが存在するため処理を中断しました。", vbCritical
-        Exit Function
-    End If
-    
-End Function
-
-'------------------------------------------------------------------------------
 ' ## 配列版IsEmpty
 '------------------------------------------------------------------------------
-Public Function IsEmptyArray(ByRef confirmation_array As Variant)
+Public Function IsEmptyArray(ByRef confirmation_array As Variant) As Boolean
     
     On Error GoTo Error_Handler
     
-    If UBound(confirmation_array) >= 0 Then
-        IsEmptyArray = False
-    Else
-        IsEmptyArray = True
-    End If
+    ' エラーまたは最大要素数が0未満の場合は空
+    IsEmptyArray = IIf(UBound(confirmation_array) < 0, True, False)
     
     Exit Function
     

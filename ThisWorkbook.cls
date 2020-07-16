@@ -8,7 +8,14 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 '------------------------------------------------------------------------------
-' ## コーディングガイドライン
+'
+' [規則化変換プログラム] v1.0   2020/07/16 G.O.
+'
+' シートごとに書かれた帳票を不要シートおよび不要行を除外し
+' 値のみのデータベース形式へ変換/逆変換を行うプログラム
+'
+'
+' ##コーディングガイドライン
 '
 ' [You.Activate|VBAコーディングガイドライン]に準拠する
 ' (http://www.thom.jp/vbainfo/codingguideline.html)
